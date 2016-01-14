@@ -39,9 +39,20 @@ void drawGrid(sf::RenderWindow *screen, int x, int y, sf::Color gcolor = sf::Col
 
 }
 
-std::vector< sf::Vector2f> gridLine(float x1, float y1, float x2, float y2)
+sf::Vector2f screenToGrid(sf::Vector2f tpos)
+{
+    return sf::Vector2f( tpos.x / TILE_SIZE, tpos.y / TILE_SIZE);
+}
+
+std::vector< sf::Vector2f> gridLine(int x1, int y1, int x2, int y2)
 {
     std::vector< sf::Vector2f> gridsOnLine;
+
+    //convert points to floats to get line equation from middle of grid points
+    float x1f = float(x1) + 0.5f;
+    float y1f = float(y1) + 0.5f;
+    float x2f = float(x2) + 0.5f;
+    float y2f = float(y2) + 0.5f;
 
     //if point 1 and point 2 are the same
     if(x1 == x2 && y1 == y2)
@@ -50,79 +61,57 @@ std::vector< sf::Vector2f> gridLine(float x1, float y1, float x2, float y2)
         return gridsOnLine;
     }
 
-    //sort points so that point 1 is leftmost point
-    if(x2 < x1)
-    {
-        float xt = x1;
-        float yt = y1;
-
-        x1 = x2;
-        y1 = y2;
-
-        x2 = xt;
-        y2 = yt;
-    }
-
     //if line is vertical
     if(x2 - x1 == 0)
     {
-        if(y2 > y1)
+        //add point 1
+        gridsOnLine.push_back(sf::Vector2f(x1, y1));
+
+        for(int i = y1; i != y2; i += (y2-y1)/abs(y2-y1))
         {
-            for(int i = y1; i <= y2 - y1; i++)
-            {
-                gridsOnLine.push_back( sf::Vector2f(x1, i) );
-            }
-            return gridsOnLine;
+            if(i == y1) continue;
+            gridsOnLine.push_back( sf::Vector2f(x1, i) );
         }
-        else
-        {
-            for(int i = y2; i <= y1 - y2; i++)
-            {
-                gridsOnLine.push_back( sf::Vector2f( x1, i) );
-            }
-            return gridsOnLine;
-        }
+
+        //add point 2
+        gridsOnLine.push_back( sf::Vector2f(x2, y2));
+        return gridsOnLine;
     }
 
     //get equation of a line
     // y = mx + b
     // b = y - mx
     // x = (b - y)/m
-    float m = (y2 - y1) / (x2 - x1);
-    float b = y1 - m*x1;
+    float m = (y2f - y1f) / (x2f - x1f);
+    float b = y1f - (m*x1f);
 
     //debug
     std::cout << "y = " << m << "*x + " << b << std::endl;
 
+    //add point 1
+    gridsOnLine.push_back(sf::Vector2f(x1, y1));
+
     //horizontal collection of grids
-    for(int i = x1; i <= x2; i++)
+    for(float i = x1f; i != x2f; i += (x2f-x1f)/fabs(x2f-x1f))
     {
-        gridsOnLine.push_back( sf::Vector2f( i, m*float(i) + b));
+        if(i == x1f) continue;
+        gridsOnLine.push_back( sf::Vector2f( floor(i), floor(m*i + b)) );
     }
-
-    float y_low = y1;
-    float y_high = y2;
-    if(y_low > y_high)
-    {
-        y_low = y2;
-        y_high = y1;
-    }
-
 
     //vertical collection of grids
-    for(int i = y_low; i <= y_high; i++)
+    for(float i = y1f; i != y2f; i += (y2f-y1f)/fabs(y2f-y1f))
     {
-        if(m == 0) gridsOnLine.push_back( sf::Vector2f(x1, i));
-        else
-        {
-            std::cout << (b-i)/m << "," << i << std::endl;
-            gridsOnLine.push_back( sf::Vector2f( -floor((b-i)/m), i) );
-        }
+        if(i == y1f) continue;
+        //std::cout << " x = (b-i)/m   =  " << round((b-i)/m) << "=" << "(" << b << " - " << i << ") / " << m << std::endl;
+
+        check remainder % inside grid for add check
+        float check = ((b - i)/m);
+        gridsOnLine.push_back( sf::Vector2f( , floor(i) ) );
     }
 
-    //add point 1 and point 2
-    //gridsOnLine.push_back( sf::Vector2f(x1, y1));
-    //gridsOnLine.push_back( sf::Vector2f(x2, y2));
+    //add x2
+    gridsOnLine.push_back( sf::Vector2f(x2,y2));
+
 
     return gridsOnLine;
 
@@ -140,8 +129,8 @@ int main(int argc, char *argv[])
 
     bool quit = false;
 
-    sf::Vector2f p1(2.5,2.5);
-    sf::Vector2f p2(6.5,6.5);
+    sf::Vector2f p1(30,30);
+    sf::Vector2f p2(300,300);
 
     while(!quit)
     {
@@ -153,14 +142,12 @@ int main(int argc, char *argv[])
         sf::Vector2f mousePos = sf::Vector2f( sf::Mouse::getPosition(*screen));
 
         //convert mouse position into grid coordinates
-        sf::Vector2f mousePosGrid = mousePos;
-        mousePosGrid.x = floor(mousePosGrid.x / TILE_SIZE);
-        mousePosGrid.y = floor(mousePosGrid.y / TILE_SIZE);
+        sf::Vector2f mousePosGrid = screenToGrid(mousePos);
 
-        std::cout << "mouse: " << mousePos.x << "," << mousePos.y << "  -  " << mousePosGrid.x << "," << mousePosGrid.y << std::endl;
+        //std::cout << "mouse: " << mousePos.x << "," << mousePos.y << "  -  " << mousePosGrid.x << "," << mousePosGrid.y << std::endl;
 
-        if(sf::Mouse::isButtonPressed(sf::Mouse::Left)) p1 = mousePosGrid;
-        else if(sf::Mouse::isButtonPressed(sf::Mouse::Right)) p2 = mousePosGrid;
+        if(sf::Mouse::isButtonPressed(sf::Mouse::Left)) p1 = mousePos;
+        else if(sf::Mouse::isButtonPressed(sf::Mouse::Right)) p2 = mousePos;
 
         while(screen->pollEvent(event) )
         {
@@ -183,21 +170,39 @@ int main(int argc, char *argv[])
 
 
         //draw
-        for(int i = 0; i < MAP_HEIGHT; i++)
-        {
-            for(int n = 0; n < MAP_WIDTH; n++)
+            //DRAW GRID
+            for(int i = 0; i < MAP_HEIGHT; i++)
             {
-                drawGrid(screen, n, i);
+                for(int n = 0; n < MAP_WIDTH; n++)
+                {
+                    drawGrid(screen, n, i);
+                }
             }
-        }
 
-        //draw grids on a line
-        std::vector< sf::Vector2f> mygrids = gridLine(p1, p2);
-        for(int i = 0; i < int(mygrids.size()); i++)
-        {
-            drawGrid( screen, mygrids[i].x, mygrids[i].y, sf::Color::Green, sf::Color::Transparent);
-        }
+            //convert points to grids
+            sf::Vector2f p1grid = screenToGrid(p1);
+            sf::Vector2f p2grid = screenToGrid(p2);
 
+
+
+            //draw grids on a line
+            std::vector< sf::Vector2f> mygrids = gridLine(p1grid, p2grid);
+            for(int i = 0; i < int(mygrids.size()); i++)
+            {
+                drawGrid( screen, mygrids[i].x, mygrids[i].y, sf::Color::Green, sf::Color::Transparent);
+            }
+
+            //DRAW POINT 1 and POINT 2 grid locations
+            drawGrid(screen, p1grid.x, p1grid.y, sf::Color(0,0,128,128), sf::Color::Transparent);
+            drawGrid(screen, p2grid.x, p2grid.y, sf::Color(0,0,128,128), sf::Color::Transparent);
+
+        //draw line
+        sf::VertexArray myline(sf::Lines, 2);
+        myline[0].position = p1;
+        myline[0].color = sf::Color::Red;
+        myline[1].position = p2;
+        myline[1].color = sf::Color::Red;
+        screen->draw(myline);
 
         //screen update
         screen->display();

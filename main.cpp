@@ -48,11 +48,20 @@ std::vector< sf::Vector2f> gridLine(int x1, int y1, int x2, int y2)
 {
     std::vector< sf::Vector2f> gridsOnLine;
 
+
+
     //convert points to floats to get line equation from middle of grid points
     float x1f = float(x1) + 0.5f;
     float y1f = float(y1) + 0.5f;
     float x2f = float(x2) + 0.5f;
     float y2f = float(y2) + 0.5f;
+
+    //calculate angle between points using first point as origin
+    float angle = acos( (x2f-x1f)  / sqrtf( powf(x2f-x1f, 2) + powf(y2f-y1f, 2)  ));
+    if(y2f > y1f) angle = 2*3.14159 - angle;
+    angle = angle * 180 / 3.14159;
+    std::cout << "angle=" << angle << std::endl;
+
 
     //if point 1 and point 2 are the same
     if(x1 == x2 && y1 == y2)
@@ -86,28 +95,33 @@ std::vector< sf::Vector2f> gridLine(int x1, int y1, int x2, int y2)
     float b = y1f - (m*x1f);
 
     //debug
-    std::cout << "y = " << m << "*x + " << b << std::endl;
+    //std::cout << "y = " << m << "*x + " << b << std::endl;
 
     //add point 1
     gridsOnLine.push_back(sf::Vector2f(x1, y1));
 
-    //horizontal collection of grids
-    for(float i = x1f; i != x2f; i += (x2f-x1f)/fabs(x2f-x1f))
+    //if angle between points is more lateral
+    if( (angle > 45 && angle < 135) || (angle > 225 && angle < 315) )
     {
-        if(i == x1f) continue;
-        gridsOnLine.push_back( sf::Vector2f( floor(i), floor(m*i + b)) );
+        for(float i = y1f; i != y2f; i += (y2f-y1f)/fabs(y2f-y1f))
+        {
+            if(i == y1f) continue;
+            //std::cout << " x = (b-i)/m   =  " << round((b-i)/m) << "=" << "(" << b << " - " << i << ") / " << m << std::endl;
+            gridsOnLine.push_back( sf::Vector2f( -floor((b-i)/m), floor(i) ) );
+        }
+    }
+    //if angle between points is more longitudinal
+    else
+    {
+        for(float i = x1f; i != x2f; i += (x2f-x1f)/fabs(x2f-x1f))
+        {
+            if(i == x1f) continue;
+            gridsOnLine.push_back( sf::Vector2f( floor(i), floor(m*i + b)) );
+        }
     }
 
-    //vertical collection of grids
-    for(float i = y1f; i != y2f; i += (y2f-y1f)/fabs(y2f-y1f))
-    {
-        if(i == y1f) continue;
-        //std::cout << " x = (b-i)/m   =  " << round((b-i)/m) << "=" << "(" << b << " - " << i << ") / " << m << std::endl;
 
-        check remainder % inside grid for add check
-        float check = ((b - i)/m);
-        gridsOnLine.push_back( sf::Vector2f( , floor(i) ) );
-    }
+
 
     //add x2
     gridsOnLine.push_back( sf::Vector2f(x2,y2));
@@ -162,6 +176,11 @@ int main(int argc, char *argv[])
                 {
 
                 }
+            }
+            else if(event.type == sf::Event::MouseButtonReleased)
+            {
+
+
             }
         }
 

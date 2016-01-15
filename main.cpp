@@ -60,7 +60,7 @@ std::vector< sf::Vector2f> gridLine(int x1, int y1, int x2, int y2)
     float angle = acos( (x2f-x1f)  / sqrtf( powf(x2f-x1f, 2) + powf(y2f-y1f, 2)  ));
     if(y2f > y1f) angle = 2*3.14159 - angle;
     angle = angle * 180 / 3.14159;
-    std::cout << "angle=" << angle << std::endl;
+    //std::cout << "angle=" << angle << std::endl;
 
 
     //if point 1 and point 2 are the same
@@ -107,7 +107,7 @@ std::vector< sf::Vector2f> gridLine(int x1, int y1, int x2, int y2)
         {
             if(i == y1f) continue;
             //std::cout << " x = (b-i)/m   =  " << round((b-i)/m) << "=" << "(" << b << " - " << i << ") / " << m << std::endl;
-            gridsOnLine.push_back( sf::Vector2f( -floor((b-i)/m), floor(i) ) );
+            gridsOnLine.push_back( sf::Vector2f( -floor((b-i)/m)-1, floor(i) ) );
         }
     }
     //if angle between points is more longitudinal
@@ -143,8 +143,8 @@ int main(int argc, char *argv[])
 
     bool quit = false;
 
-    sf::Vector2f p1(30,30);
-    sf::Vector2f p2(300,300);
+    sf::Vector2f p1(273,307);
+    sf::Vector2f p2(565,180);
 
     while(!quit)
     {
@@ -160,21 +160,30 @@ int main(int argc, char *argv[])
 
         //std::cout << "mouse: " << mousePos.x << "," << mousePos.y << "  -  " << mousePosGrid.x << "," << mousePosGrid.y << std::endl;
 
-        if(sf::Mouse::isButtonPressed(sf::Mouse::Left)) p1 = mousePos;
-        else if(sf::Mouse::isButtonPressed(sf::Mouse::Right)) p2 = mousePos;
+        //if mouse cursor is within window, handle events
+        if(screen->getViewport( screen->getView()).contains(sf::Vector2i(mousePos)) && screen->hasFocus())
+        {
+            if(sf::Mouse::isButtonPressed(sf::Mouse::Left)) p1 = mousePos;
+            else if(sf::Mouse::isButtonPressed(sf::Mouse::Right)) p2 = mousePos;
+        }
+
 
         while(screen->pollEvent(event) )
         {
+            if(!screen->hasFocus()) break;
+
             if(event.type == sf::Event::Closed) quit = true;
             else if(event.type == sf::Event::KeyPressed)
             {
                 if(event.key.code == sf::Keyboard::Escape) quit = true;
             }
-            else if(event.type == sf::Event::MouseButtonPressed)
+            else if(event.type == sf::Event::MouseButtonPressed && screen->getViewport( screen->getView()).contains(sf::Vector2i(mousePos)) )
             {
+                std::cout << "screenpos : " << mousePos.x << "," << mousePos.y << std::endl;
+                std::cout << "gridpos : " << mousePosGrid.x << "," << mousePosGrid.y << std::endl;
+
                 if(event.mouseButton.button == sf::Mouse::Left)
                 {
-
                 }
             }
             else if(event.type == sf::Event::MouseButtonReleased)

@@ -147,6 +147,7 @@ int main(int argc, char *argv[])
     sf::Clock myclock;
     int counter = 0;
     int countertime = 500;
+    bool docounter = false;
 
     while(!quit)
     {
@@ -178,6 +179,7 @@ int main(int argc, char *argv[])
             else if(event.type == sf::Event::KeyPressed)
             {
                 if(event.key.code == sf::Keyboard::Escape) quit = true;
+                else if(event.key.code == sf::Keyboard::F1) docounter = !docounter;
             }
             else if(event.type == sf::Event::MouseButtonPressed && screen->getViewport( screen->getView()).contains(sf::Vector2i(mousePos)) )
             {
@@ -224,6 +226,8 @@ int main(int argc, char *argv[])
             //draw grids on a line
             std::vector< sf::Vector2f> mygrids = gridLine(p1grid, p2grid);
             if(counter > int(mygrids.size()) ) counter = 0;
+
+            if(!docounter) counter = int(mygrids.size());
 
             for(int i = 0; i < counter; i++)
             {

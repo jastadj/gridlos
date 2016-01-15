@@ -44,11 +44,10 @@ sf::Vector2f screenToGrid(sf::Vector2f tpos)
     return sf::Vector2f( tpos.x / TILE_SIZE, tpos.y / TILE_SIZE);
 }
 
+//returns list of grids in a line between point 1 and point 2
 std::vector< sf::Vector2f> gridLine(int x1, int y1, int x2, int y2)
 {
     std::vector< sf::Vector2f> gridsOnLine;
-
-
 
     //convert points to floats to get line equation from middle of grid points
     float x1f = float(x1) + 0.5f;
@@ -57,6 +56,7 @@ std::vector< sf::Vector2f> gridLine(int x1, int y1, int x2, int y2)
     float y2f = float(y2) + 0.5f;
 
     //calculate angle between points using first point as origin
+    //the angle is used to determine which algorithm to use ( y=mx+b or x=(b-y)/m )
     float angle = acos( (x2f-x1f)  / sqrtf( powf(x2f-x1f, 2) + powf(y2f-y1f, 2)  ));
     if(y2f > y1f) angle = 2*3.14159 - angle;
     angle = angle * 180 / 3.14159;
@@ -100,17 +100,18 @@ std::vector< sf::Vector2f> gridLine(int x1, int y1, int x2, int y2)
     //add point 1
     gridsOnLine.push_back(sf::Vector2f(x1, y1));
 
-    //if angle between points is more lateral
+    //if angle between points is more lateral, use x = (b-y)/m
     if( (angle > 45 && angle < 135) || (angle > 225 && angle < 315) )
     {
         for(float i = y1f; i != y2f; i += (y2f-y1f)/fabs(y2f-y1f))
         {
             if(i == y1f) continue;
             //std::cout << " x = (b-i)/m   =  " << round((b-i)/m) << "=" << "(" << b << " - " << i << ") / " << m << std::endl;
+            //had to add a -1 to the x-axis, everything is off by 1?  not sure why, also floor is negative because y-axis is flipped
             gridsOnLine.push_back( sf::Vector2f( -floor((b-i)/m)-1, floor(i) ) );
         }
     }
-    //if angle between points is more longitudinal
+    //if angle between points is more longitudinal use y=mx+b
     else
     {
         for(float i = x1f; i != x2f; i += (x2f-x1f)/fabs(x2f-x1f))
@@ -120,10 +121,7 @@ std::vector< sf::Vector2f> gridLine(int x1, int y1, int x2, int y2)
         }
     }
 
-
-
-
-    //add x2
+    //add point #2 at the end
     gridsOnLine.push_back( sf::Vector2f(x2,y2));
 
 

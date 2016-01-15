@@ -144,6 +144,10 @@ int main(int argc, char *argv[])
     sf::Vector2f p1(273,307);
     sf::Vector2f p2(565,180);
 
+    sf::Clock myclock;
+    int counter = 0;
+    int countertime = 500;
+
     while(!quit)
     {
         sf::Event event;
@@ -193,6 +197,12 @@ int main(int argc, char *argv[])
 
 
         //update
+            //update grid counter
+            if(myclock.getElapsedTime().asMilliseconds() > countertime)
+            {
+                counter++;
+                myclock.restart();
+            }
 
 
         //draw
@@ -213,7 +223,9 @@ int main(int argc, char *argv[])
 
             //draw grids on a line
             std::vector< sf::Vector2f> mygrids = gridLine(p1grid, p2grid);
-            for(int i = 0; i < int(mygrids.size()); i++)
+            if(counter > int(mygrids.size()) ) counter = 0;
+
+            for(int i = 0; i < counter; i++)
             {
                 drawGrid( screen, mygrids[i].x, mygrids[i].y, sf::Color::Green, sf::Color::Transparent);
             }
